@@ -1,0 +1,21 @@
+{
+  "name": "devlinkr-backend",
+  "version": "1.0.0",
+  "description": "Where developers connect, collaborate, and Level up together",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "nodejs",
+    "js",
+    "backend",
+    "MongoDB"
+  ],
+  "author": "Fahad",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
