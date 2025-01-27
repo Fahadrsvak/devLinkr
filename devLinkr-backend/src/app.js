@@ -77,12 +77,12 @@ app.delete("/user", async (req, res) => {
 app.patch("/user", async (req, res) => {
   const userId = req.body._id;
   const update = req.body;
-  const options = { returnDocument: "after" };
+  const options = { returnDocument: "after", runValidators: true };
   try {
     const user = await User.findByIdAndUpdate(userId, update, options);
     res.send("User Updated :" + user);
-  } catch {
-    res.status(400).send("Something went wrong");
+  } catch (err) {
+    res.status(400).send("UPDATE FAILED : " + err.message);
   }
 });
 
@@ -90,13 +90,18 @@ app.patch("/user", async (req, res) => {
 app.patch("/userByEmail", async (req, res) => {
   const userEmail = req.body.emailId;
   const data = req.body;
+  const options = { returnDocument: "after", runValidators: true };
   try {
     const user = await User.findOne({ emailId: userEmail });
     if (!user) {
       res.status(404).send("No user found : Check email");
     } else {
       try {
-        const updatedUser = await User.findByIdAndUpdate(user._id, data);
+        const updatedUser = await User.findByIdAndUpdate(
+          user._id,
+          data,
+          options
+        );
         res.send("updated user :" + updatedUser);
       } catch (err) {
         res.status(400).send("Something went wrong");
