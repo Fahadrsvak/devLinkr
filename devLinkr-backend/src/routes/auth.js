@@ -2,8 +2,8 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
 
-const User = require("./models/user");
-const { validateSignupData } = require("./utils/validation");
+const User = require("../models/user");
+const { validateSignupData } = require("../utils/validation");
 
 const authRouter = express.Router();
 
@@ -41,13 +41,11 @@ authRouter.post("/login", async (req, res) => {
     }
 
     const user = await User.findOne({ emailId });
-
     if (!user) {
       throw new Error("Invalid credentials");
     }
 
     const isValidUser = await user.validatePassword(password);
-
     if (!isValidUser) {
       throw new Error("Invalid credentials");
     }
@@ -63,3 +61,19 @@ authRouter.post("/login", async (req, res) => {
     res.status(404).send("Erorr:" + err.message);
   }
 });
+
+//logout API
+authRouter.post("/logout", async (req, res) => {
+  try {
+    res
+      .cookie("token", null, {
+        expires: new Date(Date.now()),
+      })
+      .status(200)
+      .send("Loggedout Successfully");
+  } catch (err) {
+    res.status(400).send("Error :" + err.message);
+  }
+});
+
+module.exports = authRouter;

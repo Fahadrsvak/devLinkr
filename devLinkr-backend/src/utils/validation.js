@@ -14,4 +14,39 @@ const validateSignupData = (req) => {
   }
 };
 
-module.exports = { validateSignupData };
+const validateProfileUpdateData = (req) => {
+  const updates = req.body;
+  const allowedUpdates = [
+    "firstName",
+    "lastName",
+    "photoUrl",
+    "about",
+    "skills",
+  ];
+  const isAllowed = Object.keys(updates).every((key) =>
+    allowedUpdates.includes(key)
+  );
+  if (!isAllowed) {
+    throw new Error("Invalid Edit Request: check again");
+  }
+};
+
+const validateForgotPasswordData = (req) => {
+  const { newPassword, currentPassword } = req.body;
+  const user = req.user;
+
+  if (!validator.isStrongPassword(newPassword)) {
+    throw new Error("Enter Strong new password");
+  }
+
+  const isValidPassword = user.validatePassword(currentPassword);
+  if (!isValidPassword) {
+    throw new Error("Invalid Credential");
+  }
+};
+
+module.exports = {
+  validateSignupData,
+  validateProfileUpdateData,
+  validateForgotPasswordData,
+};
