@@ -14,16 +14,19 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
 
-    res.status(200).send("profile data :" + user);
+    res.status(200).json({
+      success: true,
+      user,
+    });
   } catch (err) {
-    res.status(404).send("Error: " + err.message);
+    res.status(400).json({ success: false, message: "Profile data not found" });
   }
 });
 
 //profile Edit API
 profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
-    validateProfileUpdateData(req);
+    if (!validateProfileUpdateData(req, res).success) return;
     const user = req.user;
     const userUpdates = req.body;
     Object.keys(userUpdates).forEach((k) => {
@@ -31,11 +34,12 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     });
     await user.save();
     res.status(200).json({
-      message: `${user.firstName}, Your Profile Updated Successfully`,
-      data: user,
+      success: true,
+      user,
     });
   } catch (err) {
-    res.status(400).send("Error :" + err.message);
+    console.log("Error in updateProfile : ", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 
@@ -45,7 +49,15 @@ profileRouter.patch("/profile/password", userAuth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const user = req.user;
 
-    validateForgotPasswordData(req);
+    if (!validateForgotPasswordData(req, res).success) return;
+
+    const isValidPassword = await user.validatePassword(currentPassword);
+    if (!isValidPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter correct current password",
+      });
+    }
 
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
 
@@ -53,11 +65,12 @@ profileRouter.patch("/profile/password", userAuth, async (req, res) => {
     await user.save();
 
     res.status(200).json({
-      message: `${user.firstName}, Your Password Updated Successfully`,
-      data: user,
+      success: true,
+      user,
     });
   } catch (err) {
-    res.status(400).send("Error :" + err.message);
+    console.log("Error in forgotPassword :", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 });
 

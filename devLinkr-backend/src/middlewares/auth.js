@@ -6,20 +6,45 @@ const userAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Invalid Token!");
+      return res.status(401).json({
+        success: false,
+        message: "Not aurhorised- No token provided",
+      });
     }
     const decodeToken = await jwt.verify(token, "DevLinkr@123");
+
+    if (!decodeToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized - Invalid token",
+      });
+    }
 
     const { _id } = decodeToken;
     const user = await User.findById(_id);
     if (!user) {
-      throw new Error("User not found : Login again");
+      return res.status(401).json({
+        success: false,
+        message: "User not found : Login again",
+      });
     }
 
     req.user = user;
     next();
   } catch (err) {
-    res.status(400).send("Error :" + err.message);
+    console.log("Error in auth middleware: ", err);
+
+    if (err instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized - Invalid token",
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
   }
 };
 module.exports = { userAuth };

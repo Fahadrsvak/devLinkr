@@ -11,7 +11,7 @@ const authRouter = express.Router();
 authRouter.post("/signup", async (req, res) => {
   try {
     //validation of data
-    validateSignupData(req);
+    if (!validateSignupData(req, res).success) return;
 
     //Encryption of password
     const { firstName, lastName, emailId, password } = req.body;
@@ -25,9 +25,16 @@ authRouter.post("/signup", async (req, res) => {
       password: passwordHash,
     });
     await user.save();
-    res.send("User added successfully");
+    res.status(201).json({
+      success: true,
+      user,
+    });
   } catch (err) {
-    res.status(400).send("Error :" + err.message);
+    console.log("Error in signup controller:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 });
 
@@ -36,18 +43,20 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    if (!validator.isEmail(emailId)) {
-      throw new Error("Invalid Email address");
+    if (!emailId || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
     }
 
-    const user = await User.findOne({ emailId });
-    if (!user) {
-      throw new Error("Invalid credentials");
-    }
+    const user = await User.findOne({ emailId }).select("+password");
 
-    const isValidUser = await user.validatePassword(password);
-    if (!isValidUser) {
-      throw new Error("Invalid credentials");
+    if (!user || !(await user.validatePassword(password))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password",
+      });
     }
 
     const token = await user.getJWT();
@@ -56,9 +65,16 @@ authRouter.post("/login", async (req, res) => {
       expires: new Date(Date.now() + 7 * 24 * 3600000), // 7days
     });
 
-    res.status(200).send("Logged in successfully!!");
+    res.status(200).json({
+      success: true,
+      user,
+    });
   } catch (err) {
-    res.status(404).send("Erorr:" + err.message);
+    console.log("Error in login controller", err);
+    res.status(500).json({
+      sucess: false,
+      message: "Server error",
+    });
   }
 });
 
@@ -70,9 +86,13 @@ authRouter.post("/logout", async (req, res) => {
         expires: new Date(Date.now()),
       })
       .status(200)
-      .send("Loggedout Successfully");
+      .json({ success: true, message: "Logged out successfully" });
   } catch (err) {
-    res.status(400).send("Error :" + err.message);
+    console.log("Error in logout controller", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 });
 
