@@ -11,7 +11,7 @@ const userAuth = async (req, res, next) => {
         message: "Not aurhorised- No token provided",
       });
     }
-    const decodeToken = await jwt.verify(token, "DevLinkr@123");
+    const decodeToken = await jwt.verify(token, process.env.JWT_SECRET);
 
     if (!decodeToken) {
       return res.status(401).json({
